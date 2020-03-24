@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		65211AB5242A6B3000105B10 /* BaseScrollViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65211AB4242A6B3000105B10 /* BaseScrollViewController.swift */; };
 		65601BB124290DE500E70FF9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65601BB024290DE500E70FF9 /* AppDelegate.swift */; };
 		65601BB324290DE500E70FF9 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65601BB224290DE500E70FF9 /* SceneDelegate.swift */; };
 		65601BB524290DE500E70FF9 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65601BB424290DE500E70FF9 /* ViewController.swift */; };
@@ -16,6 +17,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		65211AB4242A6B3000105B10 /* BaseScrollViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseScrollViewController.swift; sourceTree = "<group>"; };
 		65601BAD24290DE500E70FF9 /* FlashbackRecorder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlashbackRecorder.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		65601BB024290DE500E70FF9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		65601BB224290DE500E70FF9 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -59,6 +61,7 @@
 				65601BB024290DE500E70FF9 /* AppDelegate.swift */,
 				65601BB224290DE500E70FF9 /* SceneDelegate.swift */,
 				65601BB424290DE500E70FF9 /* ViewController.swift */,
+				65211AB4242A6B3000105B10 /* BaseScrollViewController.swift */,
 				65601BB624290DE500E70FF9 /* Main.storyboard */,
 				65601BB924290DE700E70FF9 /* Assets.xcassets */,
 				65601BBB24290DE700E70FF9 /* LaunchScreen.storyboard */,
@@ -140,6 +143,7 @@
 			files = (
 				65601BB524290DE500E70FF9 /* ViewController.swift in Sources */,
 				65601BB124290DE500E70FF9 /* AppDelegate.swift in Sources */,
+				65211AB5242A6B3000105B10 /* BaseScrollViewController.swift in Sources */,
 				65601BB324290DE500E70FF9 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

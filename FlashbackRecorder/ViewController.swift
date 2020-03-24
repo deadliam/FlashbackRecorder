@@ -10,7 +10,7 @@ import UIKit
 import AVFoundation
 import UserNotifications
 
-class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDelegate {
+class ViewController: BaseScrollViewController, AVAudioRecorderDelegate, AVAudioPlayerDelegate {
     
     var recordButton: UIButton!
     var playButton: UIButton!
@@ -20,28 +20,33 @@ class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDe
     var player: AVAudioPlayer?
     var failLabel: UILabel!
     var label: UILabel!
-    
+    var stackView: UIStackView!
+   
     let maxFiles = 5
     let recDuration: TimeInterval = 10 // seconds
-    var documentDirUrl: URL!
+    var documentsDirUrl: URL!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         overrideUserInterfaceStyle = .dark
-        
+        stackView = UIStackView()
+    
         do {
             let manager = FileManager.default
-            documentDirUrl = try manager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+            documentsDirUrl = try manager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
         } catch {
             print("Can not read documents dir!")
         }
+        
+        createStackView()
+        createTable()
         
         print(recordsInDocumentsDir())
         
         player?.delegate = self
         self.loadPlayButton()
         self.loadCleanupRecordsButton()
-        self.loadTextLabel(text: "")
+//        self.loadTextLabel(text: "")
         
         print(FileManager.default.urls(for: .documentDirectory) ?? "none")
         recordingSession = AVAudioSession.sharedInstance()
@@ -64,6 +69,52 @@ class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDe
         }
     }
     
+    func createStackView() {
+        stackView.removeFromSuperview()
+        stackView.axis = .vertical
+        stackView.alignment = .fill
+        stackView.spacing = 10
+        stackView.distribution = .fill
+        scrollView.addSubview(stackView)
+
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+          // Attaching the content's edges to the scroll view's edges
+          stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+          stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+          stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+          stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+
+          // Satisfying size constraints
+          stackView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
+        ])
+    }
+    
+    func createTable() {
+        let contentsOfDocuments = recordsInDocumentsDir()
+        for i in 0...5 {
+            let listView = UIView()
+            listView.backgroundColor = .gray
+            stackView.addArrangedSubview(listView)
+            listView.translatesAutoresizingMaskIntoConstraints = false
+            // Doesn't have intrinsic content size, so we have to provide the height at least
+            listView.heightAnchor.constraint(equalToConstant: 0).isActive = true
+
+            // Label (has instrinsic content size)
+            let label = UILabel()
+            label.font = label.font.withSize(25)
+            label.backgroundColor = .orange
+            if contentsOfDocuments.indices.contains(i) {
+                let labelText = contentsOfDocuments[i].dropFirst(10).dropLast(4)
+                label.text = String(labelText)
+            } else {
+                break
+            }
+            label.textAlignment = .left
+            stackView.addArrangedSubview(label)
+        }
+    }
+        
     func getRecordingURL() -> URL {
         let now: Date = Date.init(timeIntervalSinceNow: 0)
         let caldate: String = now.toString(dateFormat: "yyyy-MM-dd_HH-mm-ss")
@@ -72,7 +123,7 @@ class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDe
     }
 
     func loadRecordButton() {
-        recordButton = UIButton(frame: CGRect(x: 64, y: 64, width: 200, height: 64))
+        recordButton = UIButton(frame: CGRect(x: 10, y: 30, width: 160, height: 64))
         recordButton.backgroundColor = UIColor.red
         recordButton.setTitle("Tap to Record", for: .normal)
         recordButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .title1)
@@ -81,7 +132,7 @@ class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDe
     }
     
     func loadPlayButton() {
-        playButton = UIButton(frame: CGRect(x: 64, y: 130, width: 200, height: 64))
+        playButton = UIButton(frame: CGRect(x: 200, y: 30, width: 160, height: 64))
         playButton.backgroundColor = UIColor.green
         playButton.setTitle("Play", for: .normal)
         playButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .title1)
@@ -90,7 +141,7 @@ class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDe
     }
     
     func loadCleanupRecordsButton() {
-        cleanupButton = UIButton(frame: CGRect(x: 64, y: 300, width: 200, height: 64))
+        cleanupButton = UIButton(frame: CGRect(x: 10, y: 110, width: 160, height: 64))
         cleanupButton.backgroundColor = UIColor.magenta
         cleanupButton.setTitle("CleanUp", for: .normal)
         cleanupButton.titleLabel?.font = UIFont.preferredFont(forTextStyle: .title1)
@@ -99,7 +150,7 @@ class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDe
     }
     
     func loadFailUI(text: String) {
-        failLabel = UILabel(frame: CGRect(x: 0, y: 400, width: 300, height: 128))
+        failLabel = UILabel(frame: CGRect(x: 0, y: 280, width: 300, height: 128))
         failLabel.textColor = UIColor.red
         failLabel.center = CGPoint(x: 160, y: 400)
         failLabel.textAlignment = NSTextAlignment.center
@@ -149,10 +200,8 @@ class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDe
         if !records.isEmpty && records.count > maxFiles {
             removeRecord(name: records.first!)
         }
-        label.text = self.recordsInDocumentsDir().last!
-        hideLabel(label: label, duration: 3)
-//        print("RECORDS: \(self.recordsInDocumentsDir().count)")
-//        print("FIRST: \(self.recordsInDocumentsDir().first!) ==== LAST: \(self.recordsInDocumentsDir().last!)")
+        print("RECORDS: \(self.recordsInDocumentsDir().count)")
+        print("FIRST: \(self.recordsInDocumentsDir().first!) ==== LAST: \(self.recordsInDocumentsDir().last!)")
     }
     
     func getDocumentsDirectory() -> URL {
@@ -163,7 +212,7 @@ class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDe
     func finishRecording(success: Bool) {
         audioRecorder.stop()
         audioRecorder = nil
-
+        
         if success {
             recordButton.setTitle("Tap to Record", for: .normal)
         } else {
@@ -175,9 +224,6 @@ class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDe
     func finishPlaying(success: Bool) {
         player?.stop()
         player = nil
-        
-        label.text = "Finished playing"
-        hideLabel(label: label, duration: 3)
         
         if success {
             playButton.setTitle("Play", for: .normal)
@@ -205,6 +251,7 @@ class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDe
     }
     
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
+        print("finished recording")
         if !flag {
             finishRecording(success: false)
         }
@@ -265,7 +312,7 @@ class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDe
 
         do {
             let manager = FileManager.default
-            if manager.changeCurrentDirectoryPath(documentDirUrl.path) {
+            if manager.changeCurrentDirectoryPath(documentsDirUrl.path) {
                 for file in try manager.contentsOfDirectory(atPath: ".") {
 //                    let creationDate = try manager.attributesOfItem(atPath: file)[FileAttributeKey.creationDate] as! Date
 //                    if meetsRequirement(name: file) && meetsRequirement(date: creationDate) {
@@ -287,7 +334,7 @@ class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDe
         func meetsRequirement(name: String) -> Bool { return name.hasPrefix("") && name.hasSuffix("m4a") }
         do {
             let manager = FileManager.default
-            if manager.changeCurrentDirectoryPath(documentDirUrl.path) {
+            if manager.changeCurrentDirectoryPath(documentsDirUrl.path) {
                 for file in try manager.contentsOfDirectory(atPath: ".") {
                     if meetsRequirement(name: file) {
                         files.append(file)
@@ -303,7 +350,7 @@ class ViewController: UIViewController, AVAudioRecorderDelegate, AVAudioPlayerDe
     
     func removeRecord(name: String) {
         do {
-            let fileName = documentDirUrl.appendingPathComponent(name)
+            let fileName = documentsDirUrl.appendingPathComponent(name)
             try FileManager.default.removeItem(at: fileName)
         } catch let error as NSError {
             print("Error: \(error.domain)")
