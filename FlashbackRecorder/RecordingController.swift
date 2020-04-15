@@ -9,21 +9,24 @@
 import Foundation
 import AVFoundation
 
+protocol RecordingControllerDelegate: AnyObject {
+    func recordingController(_ controller: RecordingController, didChangeStateTo state: RecordingController.State)
+}
+
 class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDelegate {
     
-    var recordingSession: AVAudioSession!
-    var audioRecorder: AVAudioRecorder!
-    var player: AVAudioPlayer?
-    var recordButton: RecordButton!
-    var playButton: PlayButton!
+    weak var delegate: RecordingControllerDelegate?
+    private var recordingSession: AVAudioSession!
+    private var audioRecorder: AVAudioRecorder!
+    private var player: AVAudioPlayer?
+    private var storage = RecordingStorage()
     
-    let recDuration: TimeInterval = 10 // seconds
-    let maxFiles = 5
+    private let recDuration: TimeInterval = 10 // seconds
+    private let maxFiles = 5
     
     override init() {
         super.init()
-        self.recordButton = RecordButton()
-        self.playButton = PlayButton()
+        self.state = State.initial
         self.player?.delegate = self
     }
     
@@ -31,8 +34,6 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         print("Recording failed: please ensure the app has access to your microphone.")
     }
     
-    ///////////////////////////
-    // тут логика завязана на UI, что с этим делать?
     func setupRecordingSession() {
         recordingSession = AVAudioSession.sharedInstance()
         do {
@@ -41,7 +42,7 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
             recordingSession.requestRecordPermission() { [unowned self] allowed in
                 DispatchQueue.main.async {
                     if allowed {
-                        print("")
+                        print("Allowed to record")
 //                        self.setupRecordButton()
                     } else {
 //                        self.setupFailUI(text: "Recording failed: please ensure the app has access to your microphone.")
@@ -55,10 +56,13 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         }
     }
     
-    func startRec() {
-        let storage = RecordingStorage()
-        let audioFilename = storage.makeRecordingURL()
-
+    func startRec() throws {
+        print("Recording started")
+        
+        guard let newAudioFileUrl = storage.createURLForNewRecord() else {
+            throw RecordingServiceError.canNotCreatePath
+        }
+        
         let settings = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
             AVSampleRateKey: 12000,
@@ -67,11 +71,10 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         ]
 
         do {
-            audioRecorder = try AVAudioRecorder(url: audioFilename, settings: settings)
+            audioRecorder = try AVAudioRecorder(url: newAudioFileUrl, settings: settings)
             audioRecorder.delegate = self
             audioRecorder.isMeteringEnabled = true
             audioRecorder.record(forDuration: recDuration)
-            recordButton.setTitle("Stop", for: .normal)
             
         } catch {
             finishRecording(success: false)
@@ -79,10 +82,8 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         
         let records = storage.getRecordsArray()
         if !records.isEmpty && records.count > maxFiles {
-            storage.removeRecord(name: records.first!.filePath)
+            storage.removeRecord(name: records.first!.title)
         }
-//        print("RECORDS: \(self.recordsInDocumentsDir().count)")
-//        print("FIRST: \(self.recordsInDocumentsDir().first!) ==== LAST: \(self.recordsInDocumentsDir().last!)")
     }
         
     func play() {
@@ -93,8 +94,8 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
 //            self.setupFailUI(text: "There is no records")
             return
         }
-        let url = storage.getDocumentsDirectoryURL().appendingPathComponent(records.last!.filePath)
         do {
+            let url = storage.getDocumentsDirectoryURL().appendingPathComponent(records.last!.title)
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
 
@@ -107,32 +108,31 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
 
             guard let player = player else { return }
             player.play()
-
+            
+            print("Playing: \(url)")
         } catch let error {
             print(error.localizedDescription)
         }
     }
     
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
-        print("finished recording")
         if !flag {
             finishRecording(success: false)
         }
     }
     
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        print("finished playing")
         finishPlaying(success: true)
     }
     
     func finishRecording(success: Bool) {
         audioRecorder.stop()
         audioRecorder = nil
-       
+        print("Recording finished")
         if success {
-            recordButton.setTitle("Tap to Record", for: .normal)
+            self.state = State.readyToRecord
         } else {
-            recordButton.setTitle("Tap to Record", for: .normal)
+            self.state = State.failed
             // recording failed :(
         }
     }
@@ -140,33 +140,62 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
     func finishPlaying(success: Bool) {
         player?.stop()
         player = nil
-       
+        print("Playing finished")
         if success {
-            playButton.setTitle("Play", for: .normal)
+            self.state = State.readyToPlay
         } else {
-            playButton.setTitle("Failed", for: .normal)
+            self.state = State.failed
             // playing failed :(
         }
     }
     
     func toggleRecording() {
         if audioRecorder == nil {
-            startRec()
+            do {
+                try startRec()
+                self.state = State.recording
+            } catch {
+                print("Can not start record")
+            }
         } else {
             finishRecording(success: true)
+            self.state = State.readyToRecord
         }
     }
     
     func togglePlaying() {
         if player == nil {
-            playButton.setTitle("Stop", for: .normal)
             play()
+            self.state = State.playing
         } else {
             finishPlaying(success: true)
+            self.state = State.readyToPlay
         }
     }
     
     func toggleCleaning() {
         
+    }
+    
+    enum State {
+        case recording
+        case readyToRecord
+        case playing
+        case readyToPlay
+        case failed
+        case initial
+    }
+    
+    var state = State.initial {
+        didSet {
+//            onStateChange?(state)
+            delegate?.recordingController(self, didChangeStateTo: state)
+        }
+    }
+    
+//    var onStateChange: ((State) -> Void)?
+    
+    enum RecordingServiceError: String, Error {
+        case canNotCreatePath = "Can not create path for new recording"
     }
 }

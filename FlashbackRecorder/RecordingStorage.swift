@@ -11,27 +11,32 @@ import Foundation
 class RecordingStorage {
     
     private var record: Record!
-    private var documentsDirUrl: URL!
     
-
-    func makeRecordingURL() -> URL {
+    func createURLForNewRecord() -> URL? {
+        
+        let appGroupFolderUrl = getDocumentsDirectoryURL()
+    
         let now: Date = Date.init(timeIntervalSinceNow: 0)
-        let caldate: String = now.toString(dateFormat: "yyyy-MM-dd_HH-mm-ss")
-        let recorderFilePath = String(format: "%@/flashback-record-%@.m4a", self.getDocumentsDirectoryURL().path, caldate)
-        return URL(string: recorderFilePath)!
+        let fileNamePrefix: String = now.toString(dateFormat: "yyyy-MM-dd_HH-mm-ss")
+        let fullFileName = "flashback-record-" + fileNamePrefix + ".m4a"
+        let newRecordFileName = appGroupFolderUrl.appendingPathComponent(fullFileName)
+        
+        return newRecordFileName
     }
+    
+//    func makeRecordingURL() -> URL {
+//        let now: Date = Date.init(timeIntervalSinceNow: 0)
+//        let caldate: String = now.toString(dateFormat: "yyyy-MM-dd_HH-mm-ss")
+//        let recorderFilePath = String(format: "%@/flashback-record-%@.m4a", self.getDocumentsDirectoryURL().path, caldate)
+//        return URL(string: recorderFilePath)!
+//    }
     
     func getDocumentsDirectoryURL() -> URL {
-        do {
-            // Все что относиться к файл менеджеру тоже лучше где-то вынести. RecordingController например занимался бы всем что касается записью, а RecordingStorage всем что касается сохранением / удалением
-            let manager = FileManager.default
-            documentsDirUrl = try manager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
-        } catch {
-            print("Can not read documents dir!")
-        }
-        return documentsDirUrl
+        let documentsDirUrls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        return documentsDirUrls[0]
     }
     
+    // сохранять json с записями и на старте апки читать
     func getRecordsArray() -> [Record] {
         var records = [Record]()
         func meetsRequirement(name: String) -> Bool { return name.hasPrefix("flashback-record-") && name.hasSuffix("m4a") }
@@ -49,6 +54,8 @@ class RecordingStorage {
         catch {
             print("Cannot read Documents dir")
         }
+        print("RECORDS: \(records.count)")
+        print("FIRST: \(String(describing: records.first?.title)) ==== LAST: \(String(describing: records.last?.title))")
         return records
     }
     
@@ -70,7 +77,7 @@ class RecordingStorage {
 
         do {
             let manager = FileManager.default
-            if manager.changeCurrentDirectoryPath(documentsDirUrl.path) {
+            if manager.changeCurrentDirectoryPath(self.getDocumentsDirectoryURL().path) {
                 for file in try manager.contentsOfDirectory(atPath: ".") {
 //                    let creationDate = try manager.attributesOfItem(atPath: file)[FileAttributeKey.creationDate] as! Date
 //                    if meetsRequirement(name: file) && meetsRequirement(date: creationDate) {

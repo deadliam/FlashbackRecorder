@@ -14,13 +14,11 @@
 		65601BB824290DE500E70FF9 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 65601BB624290DE500E70FF9 /* Main.storyboard */; };
 		65601BBA24290DE700E70FF9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 65601BB924290DE700E70FF9 /* Assets.xcassets */; };
 		65601BBD24290DE700E70FF9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 65601BBB24290DE700E70FF9 /* LaunchScreen.storyboard */; };
-		65BC1681242D30BE00F98C2F /* RecordButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1680242D30BE00F98C2F /* RecordButton.swift */; };
+		65BC1681242D30BE00F98C2F /* ButtonBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1680242D30BE00F98C2F /* ButtonBuilder.swift */; };
 		65BC1683242D324B00F98C2F /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1682242D324B00F98C2F /* Extensions.swift */; };
 		65BC1685242D3AD200F98C2F /* RecordingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1684242D3AD200F98C2F /* RecordingController.swift */; };
 		65BC1687242D3B3F00F98C2F /* RecordingStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1686242D3B3F00F98C2F /* RecordingStorage.swift */; };
 		65BC1689242D495D00F98C2F /* RecordsTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1688242D495D00F98C2F /* RecordsTableView.swift */; };
-		65BC168D242D4F2A00F98C2F /* PlayButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC168C242D4F2A00F98C2F /* PlayButton.swift */; };
-		65BC168F242D540000F98C2F /* CleanRecordsButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC168E242D540000F98C2F /* CleanRecordsButton.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,13 +31,11 @@
 		65601BB924290DE700E70FF9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		65601BBC24290DE700E70FF9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		65601BBE24290DE700E70FF9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		65BC1680242D30BE00F98C2F /* RecordButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordButton.swift; sourceTree = "<group>"; };
+		65BC1680242D30BE00F98C2F /* ButtonBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonBuilder.swift; sourceTree = "<group>"; };
 		65BC1682242D324B00F98C2F /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		65BC1684242D3AD200F98C2F /* RecordingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingController.swift; sourceTree = "<group>"; };
 		65BC1686242D3B3F00F98C2F /* RecordingStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingStorage.swift; sourceTree = "<group>"; };
 		65BC1688242D495D00F98C2F /* RecordsTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsTableView.swift; sourceTree = "<group>"; };
-		65BC168C242D4F2A00F98C2F /* PlayButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayButton.swift; sourceTree = "<group>"; };
-		65BC168E242D540000F98C2F /* CleanRecordsButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanRecordsButton.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,9 +72,7 @@
 				65601BB224290DE500E70FF9 /* SceneDelegate.swift */,
 				65601BB424290DE500E70FF9 /* ViewController.swift */,
 				65211AB4242A6B3000105B10 /* BaseScrollViewController.swift */,
-				65BC1680242D30BE00F98C2F /* RecordButton.swift */,
-				65BC168C242D4F2A00F98C2F /* PlayButton.swift */,
-				65BC168E242D540000F98C2F /* CleanRecordsButton.swift */,
+				65BC1680242D30BE00F98C2F /* ButtonBuilder.swift */,
 				65601BB624290DE500E70FF9 /* Main.storyboard */,
 				65601BB924290DE700E70FF9 /* Assets.xcassets */,
 				65601BBB24290DE700E70FF9 /* LaunchScreen.storyboard */,
@@ -163,16 +157,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				65601BB524290DE500E70FF9 /* ViewController.swift in Sources */,
-				65BC168D242D4F2A00F98C2F /* PlayButton.swift in Sources */,
 				65BC1683242D324B00F98C2F /* Extensions.swift in Sources */,
 				65BC1689242D495D00F98C2F /* RecordsTableView.swift in Sources */,
 				65601BB124290DE500E70FF9 /* AppDelegate.swift in Sources */,
 				65BC1687242D3B3F00F98C2F /* RecordingStorage.swift in Sources */,
-				65BC168F242D540000F98C2F /* CleanRecordsButton.swift in Sources */,
 				65BC1685242D3AD200F98C2F /* RecordingController.swift in Sources */,
 				65211AB5242A6B3000105B10 /* BaseScrollViewController.swift in Sources */,
 				65601BB324290DE500E70FF9 /* SceneDelegate.swift in Sources */,
-				65BC1681242D30BE00F98C2F /* RecordButton.swift in Sources */,
+				65BC1681242D30BE00F98C2F /* ButtonBuilder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

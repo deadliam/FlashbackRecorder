@@ -10,57 +10,81 @@ import UIKit
 import AVFoundation
 import UserNotifications
 
-/////////////////////////////
-// А если я создал классы кнопок и наследовал их от UIButton? а не от UIView??
-/////////////////////////////
-// Здесь конечно все и сразу, возможно стоило разбить на отдельные вью
-// частая практика - создавать отдельный наследник класса UIView и уже его использовать при создании всей картины
-// условно можно было бы сделать class PlayButton: UIView {...}  class CleanButton: UIView {...} и т.д.
-class ViewController: BaseScrollViewController {
+class ViewController: BaseScrollViewController, RecordingControllerDelegate {
+    func recordingController(_ controller: RecordingController, didChangeStateTo state: RecordingController.State) {
+        updateUIButtons(state: state)
+    }
     
-    // все свойства и методы недоступные снаружи должны быть private
-    private var playButton: UIButton!
-    private var cleanupButton: UIButton!
     private var recordButton: UIButton!
+    private var playButton: UIButton!
+    private var cleanButton: UIButton!
     private var recordingController: RecordingController!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         self.overrideUserInterfaceStyle = .dark
-        self.navigationItem.title = "Recorder"
-        self.navigationController?.navigationBar.prefersLargeTitles = true
+//        self.navigationItem.title = "Recorder"
+//        self.navigationController?.navigationBar.prefersLargeTitles = true
     
+        recordingController = RecordingController()
+        recordingController.delegate = self
+        //        recordingController.onStateChange = {[weak self] state in
+        //           self?.updateUI(state: state)
+        //        }
+        recordingController.setupRecordingSession()
+        
 //        RecordsTableView().setupStackView()
 //        RecordsTableView().setupTable()
         
-        self.setupRecordButton()
-        self.setupPlayButton()
-        self.setupCleanupRecordsButton()
-//        self.setupTextLabel(text: "")
-        
-        recordingController = RecordingController()
-        recordingController.setupRecordingSession()
-    }
-    
-    func setupRecordButton() {
-        recordButton = RecordButton()
-        recordButton.addTarget(self, action: #selector(toggleRecording), for: .touchUpInside)
+        recordButton = ButtonBuilder.createButton(name: "Record", color: .red, target: self, action: #selector(toggleRecording))
         view.addSubview(recordButton)
-    }
-    
-    func setupPlayButton() {
-        playButton = PlayButton()
-        playButton.addTarget(self, action: #selector(togglePlaying), for: .touchUpInside)
+        setButtonConstraints(button: recordButton, positionY: 50)
+        
+        playButton = ButtonBuilder.createButton(name: "Play", color: .green, target: self, action: #selector(togglePlaying))
         view.addSubview(playButton)
+        setButtonConstraints(button: playButton, positionY: 150)
+        
+        cleanButton = ButtonBuilder.createButton(name: "Clean", color: .orange, target: self, action: #selector(toggleCleaning))
+        view.addSubview(cleanButton)
+        setButtonConstraints(button: cleanButton, positionY: 300)
     }
     
-    func setupCleanupRecordsButton() {
-        cleanupButton = CleanRecordsButton()
-        cleanupButton.addTarget(self, action: #selector(toggleCleaning), for: .touchUpInside)
-        view.addSubview(cleanupButton)
+    func setButtonConstraints(button: UIButton, positionY: CGFloat) {
+        button.widthAnchor.constraint(equalToConstant: 150).isActive = true
+        button.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        button.topAnchor.constraint(equalTo: view.topAnchor, constant: positionY).isActive = true
+        button.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        // button.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 50).isActive = true
     }
     
+    func updateUIButtons(state: RecordingController.State) {
+        switch state {
+        case .recording:
+            recordButton.setTitle("Stop", for: .normal)
+        case .readyToRecord:
+            recordButton.setTitle("Record", for: .normal)
+        case .playing:
+            playButton.setTitle("Stop", for: .normal)
+        case .readyToPlay:
+            playButton.setTitle("Play", for: .normal)
+        default:
+            recordButton.setTitle("Record", for: .normal)
+            playButton.setTitle("Play", for: .normal)
+        }
+    }
+    
+//    func updateUIPlayButton(state: RecordingController.State) {
+//        switch state {
+//        case .playing:
+//            playButton.setTitle("Stop", for: .normal)
+//        case .readyToPlay:
+//            playButton.setTitle("Play", for: .normal)
+//        default:
+//            playButton.setTitle("Undefined", for: .normal)
+//        }
+//    }
+
     @objc func toggleRecording() {
         recordingController.toggleRecording()
     }
