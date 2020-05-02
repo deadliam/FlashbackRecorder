@@ -86,8 +86,13 @@ class RecordingStorage {
     func toggleListing() {
         do {
             let manager = FileManager.default
-            for file in try manager.contentsOfDirectory(atPath: getRecordsDirectoryURL().path) {
-                print(file)
+            let files = try manager.contentsOfDirectory(atPath: getRecordsDirectoryURL().path)
+            if !files.isEmpty {
+                for file in files {
+                    print(file)
+                }
+            } else {
+                print("There is nothing to list :(")
             }
         }
         catch {
@@ -101,15 +106,15 @@ class RecordingStorage {
 //        let minimumDate = Date().addingTimeInterval(-maximumDays*24*60*60)
 //        func meetsRequirement(date: Date) -> Bool { return date < minimumDate }
         
-        func meetsRequirement(name: String) -> Bool { return name.hasPrefix("flashback-record-") && name.hasSuffix("m4a") }
-
+        func meetsRequirement(name: String) -> Bool { return name.contains("flashback-record-") && name.hasSuffix("m4a") }
         do {
             let manager = FileManager.default
-            for file in try manager.contentsOfDirectory(atPath: getRecordsDirectoryURL().path) {
+            for file in try manager.contentsOfDirectory(at: getRecordsDirectoryURL(), includingPropertiesForKeys: []) {
 //                    let creationDate = try manager.attributesOfItem(atPath: file)[FileAttributeKey.creationDate] as! Date
 //                    if meetsRequirement(name: file) && meetsRequirement(date: creationDate) {
-                if meetsRequirement(name: file) {
-                    try manager.removeItem(atPath: file)
+                if meetsRequirement(name: file.path) {
+                    try manager.removeItem(at: file)
+                    print("Removed: \(file.path)")
                 }
             }
         }

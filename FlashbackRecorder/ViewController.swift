@@ -80,17 +80,6 @@ class ViewController: BaseScrollViewController, RecordingControllerDelegate {
             break
         }
     }
-    
-//    func updateUIPlayButton(state: RecordingController.State) {
-//        switch state {
-//        case .playing:
-//            playButton.setTitle("Stop", for: .normal)
-//        case .readyToPlay:
-//            playButton.setTitle("Play", for: .normal)
-//        default:
-//            playButton.setTitle("Undefined", for: .normal)
-//        }
-//    }
 
     @objc func toggleRecording() {
         recordingController.toggleRecording()

@@ -100,7 +100,7 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
             let url = storage.getRecordsDirectoryURL().appendingPathComponent(records.last!.title)
             
             print("FILE: \(url)")
-            
+            try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord)
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
 
@@ -112,11 +112,10 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
             player = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileTypeMPEGLayer3) */
 
             guard let player = player else { return }
-            player.prepareToPlay()
+//            player.prepareToPlay()
 //            player.volume = 1.0
             player.play()
             
-            print("Playing: \(url)")
         } catch let error {
             print(error.localizedDescription)
         }
