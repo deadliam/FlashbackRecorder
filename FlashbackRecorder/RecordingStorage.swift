@@ -14,11 +14,11 @@ class RecordingStorage {
     
     func createURLForNewRecord() -> URL? {
         
-        let appGroupFolderUrl = getDocumentsDirectoryURL()
+        let appGroupFolderUrl = getRecordsDirectoryURL()
     
         let now: Date = Date.init(timeIntervalSinceNow: 0)
-        let fileNamePrefix: String = now.toString(dateFormat: "yyyy-MM-dd_HH-mm-ss")
-        let fullFileName = "flashback-record-" + fileNamePrefix + ".m4a"
+        let fileNameDatePrefix: String = now.toString(dateFormat: "yyyy-MM-dd_HH-mm-ss")
+        let fullFileName = "flashback-record-" + fileNameDatePrefix + ".m4a"
         let newRecordFileName = appGroupFolderUrl.appendingPathComponent(fullFileName)
         
         return newRecordFileName
@@ -27,13 +27,28 @@ class RecordingStorage {
 //    func makeRecordingURL() -> URL {
 //        let now: Date = Date.init(timeIntervalSinceNow: 0)
 //        let caldate: String = now.toString(dateFormat: "yyyy-MM-dd_HH-mm-ss")
-//        let recorderFilePath = String(format: "%@/flashback-record-%@.m4a", self.getDocumentsDirectoryURL().path, caldate)
+//        let recorderFilePath = String(format: "%@/flashback-record-%@.m4a", self.getRecordsDirectoryURL().path, caldate)
 //        return URL(string: recorderFilePath)!
 //    }
     
-    func getDocumentsDirectoryURL() -> URL {
-        let documentsDirUrls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        return documentsDirUrls[0]
+//    func getDocumentsDirectoryURL() -> URL {
+//        let documentsDirUrls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+//        return documentsDirUrls
+//    }
+    
+    func getRecordsDirectoryURL() -> URL {
+        return FileManager.documentDirectoryURL.appendingPathComponent("Records")
+    }
+    
+    func createRecordsDir() {
+        let recDir = getRecordsDirectoryURL()
+        if !FileManager.default.fileExists(atPath: recDir.path) {
+            do {
+                try FileManager.default.createDirectory(atPath: recDir.path, withIntermediateDirectories: true, attributes: nil)
+            } catch {
+                NSLog("Couldn't create Records directory")
+            }
+        }
     }
     
     // сохранять json с записями и на старте апки читать
@@ -42,7 +57,7 @@ class RecordingStorage {
         func meetsRequirement(name: String) -> Bool { return name.hasPrefix("flashback-record-") && name.hasSuffix("m4a") }
         do {
             let manager = FileManager.default
-            if manager.changeCurrentDirectoryPath(getDocumentsDirectoryURL().path) {
+            if manager.changeCurrentDirectoryPath(getRecordsDirectoryURL().path) {
                 for filePath in try manager.contentsOfDirectory(atPath: ".") {
                     if meetsRequirement(name: filePath) {
                         let createdDate = manager.createdDateForFile(atPath: filePath)
@@ -54,36 +69,47 @@ class RecordingStorage {
         catch {
             print("Cannot read Documents dir")
         }
-        print("RECORDS: \(records.count)")
-        print("FIRST: \(String(describing: records.first?.title)) ==== LAST: \(String(describing: records.last?.title))")
+//        print("RECORDS: \(records.count)")
+//        print("FIRST: \(String(describing: records.first?.title)) ==== LAST: \(String(describing: records.last?.title))")
         return records
     }
     
     func removeRecord(name: String) {
         do {
-            let fileName = getDocumentsDirectoryURL().appendingPathComponent(name)
+            let fileName = getRecordsDirectoryURL().appendingPathComponent(name)
             try FileManager.default.removeItem(at: fileName)
         } catch let error as NSError {
             print("Error: \(error.domain)")
         }
     }
     
-    @objc func cleanUp() {
-        let maximumDays = 1.0
-        let minimumDate = Date().addingTimeInterval(-maximumDays*24*60*60)
-        func meetsRequirement(date: Date) -> Bool { return date < minimumDate }
-
+    func toggleListing() {
+        do {
+            let manager = FileManager.default
+            for file in try manager.contentsOfDirectory(atPath: getRecordsDirectoryURL().path) {
+                print(file)
+            }
+        }
+        catch {
+            print("Cannot list files. \(error)")
+        }
+    }
+    
+    
+    func toggleCleaning() {
+//        let maximumDays = 1.0
+//        let minimumDate = Date().addingTimeInterval(-maximumDays*24*60*60)
+//        func meetsRequirement(date: Date) -> Bool { return date < minimumDate }
+        
         func meetsRequirement(name: String) -> Bool { return name.hasPrefix("flashback-record-") && name.hasSuffix("m4a") }
 
         do {
             let manager = FileManager.default
-            if manager.changeCurrentDirectoryPath(self.getDocumentsDirectoryURL().path) {
-                for file in try manager.contentsOfDirectory(atPath: ".") {
+            for file in try manager.contentsOfDirectory(atPath: getRecordsDirectoryURL().path) {
 //                    let creationDate = try manager.attributesOfItem(atPath: file)[FileAttributeKey.creationDate] as! Date
 //                    if meetsRequirement(name: file) && meetsRequirement(date: creationDate) {
-                    if meetsRequirement(name: file) {
-                        try manager.removeItem(atPath: file)
-                    }
+                if meetsRequirement(name: file) {
+                    try manager.removeItem(atPath: file)
                 }
             }
         }
@@ -93,6 +119,7 @@ class RecordingStorage {
 //        cleanupButton.backgroundColor = UIColor.blue
 //        cleanupButton.setTitle("Cleaned", for: .normal)
     }
+    
 }
 
 class Record {

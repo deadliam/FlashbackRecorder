@@ -25,6 +25,11 @@ extension FileManager {
         }
         return theCreationDate
     }
+    
+    static var documentDirectoryURL: URL {
+        let documentDirectoryURL = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+        return documentDirectoryURL
+    }
 }
 
 extension Date {

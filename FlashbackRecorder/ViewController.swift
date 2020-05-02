@@ -18,7 +18,9 @@ class ViewController: BaseScrollViewController, RecordingControllerDelegate {
     private var recordButton: UIButton!
     private var playButton: UIButton!
     private var cleanButton: UIButton!
+    private var listFilesButton: UIButton!
     private var recordingController: RecordingController!
+    private var recordingStorage: RecordingStorage!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,7 +28,9 @@ class ViewController: BaseScrollViewController, RecordingControllerDelegate {
         self.overrideUserInterfaceStyle = .dark
 //        self.navigationItem.title = "Recorder"
 //        self.navigationController?.navigationBar.prefersLargeTitles = true
-    
+        
+        recordingStorage = RecordingStorage()
+        
         recordingController = RecordingController()
         recordingController.delegate = self
         //        recordingController.onStateChange = {[weak self] state in
@@ -43,11 +47,15 @@ class ViewController: BaseScrollViewController, RecordingControllerDelegate {
         
         playButton = ButtonBuilder.createButton(name: "Play", color: .green, target: self, action: #selector(togglePlaying))
         view.addSubview(playButton)
-        setButtonConstraints(button: playButton, positionY: 150)
+        setButtonConstraints(button: playButton, positionY: 120)
         
         cleanButton = ButtonBuilder.createButton(name: "Clean", color: .orange, target: self, action: #selector(toggleCleaning))
         view.addSubview(cleanButton)
-        setButtonConstraints(button: cleanButton, positionY: 300)
+        setButtonConstraints(button: cleanButton, positionY: 200)
+        
+        listFilesButton = ButtonBuilder.createButton(name: "List", color: .cyan, target: self, action: #selector(toggleListing))
+        view.addSubview(listFilesButton)
+        setButtonConstraints(button: listFilesButton, positionY: 270)
     }
     
     func setButtonConstraints(button: UIButton, positionY: CGFloat) {
@@ -69,8 +77,7 @@ class ViewController: BaseScrollViewController, RecordingControllerDelegate {
         case .readyToPlay:
             playButton.setTitle("Play", for: .normal)
         default:
-            recordButton.setTitle("Record", for: .normal)
-            playButton.setTitle("Play", for: .normal)
+            break
         }
     }
     
@@ -94,7 +101,11 @@ class ViewController: BaseScrollViewController, RecordingControllerDelegate {
     }
     
     @objc func toggleCleaning() {
-        recordingController.toggleCleaning()
+        recordingStorage.toggleCleaning()
+    }
+    
+    @objc func toggleListing() {
+        recordingStorage.toggleListing()
     }
     
     // Вот это не совсем правильно. По сути лейблу можно добавить один раз во вью, а дальше просто менять ее свойство hidden. Изначально она должна быть спрятана видимо

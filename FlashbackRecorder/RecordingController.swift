@@ -57,6 +57,8 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
     }
     
     func startRec() throws {
+        
+        storage.createRecordsDir()
         print("Recording started")
         
         guard let newAudioFileUrl = storage.createURLForNewRecord() else {
@@ -95,7 +97,10 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
             return
         }
         do {
-            let url = storage.getDocumentsDirectoryURL().appendingPathComponent(records.last!.title)
+            let url = storage.getRecordsDirectoryURL().appendingPathComponent(records.last!.title)
+            
+            print("FILE: \(url)")
+            
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
 
@@ -107,6 +112,8 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
             player = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileTypeMPEGLayer3) */
 
             guard let player = player else { return }
+            player.prepareToPlay()
+//            player.volume = 1.0
             player.play()
             
             print("Playing: \(url)")
@@ -171,10 +178,6 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
             finishPlaying(success: true)
             self.state = State.readyToPlay
         }
-    }
-    
-    func toggleCleaning() {
-        
     }
     
     enum State {
