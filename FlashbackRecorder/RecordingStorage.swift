@@ -14,12 +14,12 @@ class RecordingStorage {
     
     func createURLForNewRecord() -> URL? {
         
-        let appGroupFolderUrl = getRecordsDirectoryURL()
+        let appRecordsFolderUrl = getRecordsDirectoryURL()
     
         let now: Date = Date.init(timeIntervalSinceNow: 0)
         let fileNameDatePrefix: String = now.toString(dateFormat: "yyyy-MM-dd_HH-mm-ss")
         let fullFileName = "flashback-record-" + fileNameDatePrefix + ".m4a"
-        let newRecordFileName = appGroupFolderUrl.appendingPathComponent(fullFileName)
+        let newRecordFileName = appRecordsFolderUrl.appendingPathComponent(fullFileName)
         
         return newRecordFileName
     }
@@ -54,14 +54,16 @@ class RecordingStorage {
     // сохранять json с записями и на старте апки читать
     func getRecordsArray() -> [Record] {
         var records = [Record]()
-        func meetsRequirement(name: String) -> Bool { return name.hasPrefix("flashback-record-") && name.hasSuffix("m4a") }
+        func meetsRequirement(name: String) -> Bool { return name.contains("flashback-record-") && name.hasSuffix("m4a") }
         do {
             let manager = FileManager.default
-            if manager.changeCurrentDirectoryPath(getRecordsDirectoryURL().path) {
-                for filePath in try manager.contentsOfDirectory(atPath: ".") {
-                    if meetsRequirement(name: filePath) {
-                        let createdDate = manager.createdDateForFile(atPath: filePath)
-                        records.append(Record(title: filePath, filePath: ".", date: createdDate))
+            let recordsDirectory = getRecordsDirectoryURL()
+//            if manager.changeCurrentDirectoryPath(recordsDirectory.path) {
+            if manager.fileExists(atPath: recordsDirectory.path) {
+                for fileName in try manager.contentsOfDirectory(atPath: recordsDirectory.path) {
+                    if meetsRequirement(name: fileName) {
+                        let createdDate = manager.createdDateForFile(atPath: recordsDirectory.appendingPathComponent(fileName).path)
+                        records.append(Record(title: fileName, filePath: recordsDirectory.path, date: createdDate))
                     }
                 }
             }

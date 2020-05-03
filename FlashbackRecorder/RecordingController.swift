@@ -26,7 +26,7 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
     
     override init() {
         super.init()
-        self.state = State.initial
+        state = State.initial
         self.player?.delegate = self
     }
     
@@ -93,14 +93,17 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         let storage = RecordingStorage()
         let records = storage.getRecordsArray()
         if records.isEmpty {
-//            self.setupFailUI(text: "There is no records")
+            state = State.readyToPlay
+            print("There is no records")
             return
         }
+        state = State.playing
         do {
-            let url = storage.getRecordsDirectoryURL().appendingPathComponent(records.last!.title)
+            let url = URL(fileURLWithPath: records.last!.filePath).appendingPathComponent(records.last!.title)
+//            let url = storage.getRecordsDirectoryURL().appendingPathComponent(records.last!.title)
             
-            print("FILE: \(url)")
-            try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord)
+            print("FILE: \(String(describing: url))")
+//            try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord)
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
 
@@ -117,6 +120,7 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
             player.play()
             
         } catch let error {
+            state = State.readyToPlay
             print(error.localizedDescription)
         }
     }
@@ -136,9 +140,9 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         audioRecorder = nil
         print("Recording finished")
         if success {
-            self.state = State.readyToRecord
+            state = State.readyToRecord
         } else {
-            self.state = State.failed
+            state = State.failed
             // recording failed :(
         }
     }
@@ -148,9 +152,9 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         player = nil
         print("Playing finished")
         if success {
-            self.state = State.readyToPlay
+            state = State.readyToPlay
         } else {
-            self.state = State.failed
+            state = State.failed
             // playing failed :(
         }
     }
@@ -159,33 +163,32 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         if audioRecorder == nil {
             do {
                 try startRec()
-                self.state = State.recording
+                state = State.recording
             } catch {
                 print("Can not start record")
             }
         } else {
             finishRecording(success: true)
-            self.state = State.readyToRecord
+            state = State.readyToRecord
         }
     }
     
     func togglePlaying() {
         if player == nil {
             play()
-            self.state = State.playing
         } else {
             finishPlaying(success: true)
-            self.state = State.readyToPlay
+            state = State.readyToPlay
         }
     }
     
     enum State {
+        case initial
         case recording
         case readyToRecord
         case playing
         case readyToPlay
         case failed
-        case initial
     }
     
     var state = State.initial {
