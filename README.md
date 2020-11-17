@@ -8,7 +8,7 @@ Settings:
 2. Set file size in mb or seconds
 3. Set files amount
 4. Set audio quality
-5. Hotkey for marker
+5. Hotkey for marker (or action: shake, movement)
 6. Launch on startup
 
 Main screen

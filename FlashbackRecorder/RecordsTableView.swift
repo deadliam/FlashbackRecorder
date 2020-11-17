@@ -12,6 +12,7 @@ import UIKit
 class RecordsTableView: BaseScrollViewController {
     
     var stackView: UIStackView!
+    private let recordsDirectoryName = "Records"
     
 //    let tableView = UITableView.init(frame: .zero, style: UITableView.Style.grouped)
     
@@ -40,7 +41,7 @@ class RecordsTableView: BaseScrollViewController {
     // у него есть dataSource и delegate
     // слегка сложный в настройке но импользуется повсеместно, он даже сразу скроллиться умеет на iOS (на маке не умеет)
     func setupTable() {
-        let contentsOfDocuments = RecordingStorage().getRecordsArray()
+        let recordsArray = RecordingStorage().getExistingRecordsArray()
         for i in 0...5 {
             let listView = UIView()
             listView.backgroundColor = .gray
@@ -53,8 +54,9 @@ class RecordsTableView: BaseScrollViewController {
             let label = UILabel()
             label.font = label.font.withSize(25)
             label.backgroundColor = .orange
-            if contentsOfDocuments.indices.contains(i) {
-                let labelText = contentsOfDocuments[i].filePath.dropFirst(10).dropLast(4)
+            if recordsArray.indices.contains(i) {
+                let labelText = recordsArray[i].title
+//                let labelText = contentsOfDocuments[i].fileRelativePath.dropFirst(10).dropLast(4)
                 label.text = String(labelText)
             } else {
                 break
@@ -63,5 +65,4 @@ class RecordsTableView: BaseScrollViewController {
             stackView.addArrangedSubview(label)
         }
     }
-    
 }

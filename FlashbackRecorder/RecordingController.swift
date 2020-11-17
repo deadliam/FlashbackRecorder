@@ -18,8 +18,10 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
     weak var delegate: RecordingControllerDelegate?
     private var recordingSession: AVAudioSession!
     private var audioRecorder: AVAudioRecorder!
-    private var player: AVAudioPlayer?
+    private var player: AVAudioPlayer? = AVAudioPlayer()
     private var storage = RecordingStorage()
+    
+    private let recordsDirectoryName = "Records"
     
     private let recDuration: TimeInterval = 10 // seconds
     private let maxFiles = 5
@@ -56,14 +58,12 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         }
     }
     
-    func startRec() throws {
+    func startRecording() throws {
         
-        storage.createRecordsDir()
+        storage.createRecordsDirectoryIfNotExists()
         print("Recording started")
         
-        guard let newAudioFileUrl = storage.createURLForNewRecord() else {
-            throw RecordingServiceError.canNotCreatePath
-        }
+        let newAudioRecord = storage.createNewRecord()
         
         let settings = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
@@ -73,25 +73,25 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         ]
 
         do {
-            audioRecorder = try AVAudioRecorder(url: newAudioFileUrl, settings: settings)
+            let documentsDirectory = FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName)
+            audioRecorder = try AVAudioRecorder(url: documentsDirectory.appendingPathComponent(newAudioRecord.title), settings: settings)
             audioRecorder.delegate = self
             audioRecorder.isMeteringEnabled = true
             audioRecorder.record(forDuration: recDuration)
-            
         } catch {
             finishRecording(success: false)
         }
         
-        let records = storage.getRecordsArray()
+        let records = storage.getExistingRecordsArray()
+        
         if !records.isEmpty && records.count > maxFiles {
             storage.removeRecord(name: records.first!.title)
         }
     }
         
-    func play() {
-    //        guard let url = Bundle.main.url(forResource: "recording", withExtension: "m4a") else { return }
+    func startPlaying() {
         let storage = RecordingStorage()
-        let records = storage.getRecordsArray()
+        let records = storage.getExistingRecordsArray()
         if records.isEmpty {
             state = State.readyToPlay
             print("There is no records")
@@ -99,23 +99,24 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         }
         state = State.playing
         do {
-            let url = URL(fileURLWithPath: records.last!.filePath).appendingPathComponent(records.last!.title)
-//            let url = storage.getRecordsDirectoryURL().appendingPathComponent(records.last!.title)
+            let documentsDirectory = FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName)
+            let url = documentsDirectory.appendingPathComponent(records.last!.title)
             
             print("FILE: \(String(describing: url))")
-//            try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord)
+            
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
 
             /* The following line is required for the player to work on iOS 11. Change the file type accordingly*/
-            player = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileType.m4a.rawValue)
+            
+            player = try AVAudioPlayer(contentsOf: url)
             
             player?.delegate = self
             /* iOS 10 and earlier require the following line:
             player = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileTypeMPEGLayer3) */
 
             guard let player = player else { return }
-//            player.prepareToPlay()
+            player.prepareToPlay()
 //            player.volume = 1.0
             player.play()
             
@@ -162,7 +163,7 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
     func toggleRecording() {
         if audioRecorder == nil {
             do {
-                try startRec()
+                try startRecording()
                 state = State.recording
             } catch {
                 print("Can not start record")
@@ -175,7 +176,7 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
     
     func togglePlaying() {
         if player == nil {
-            play()
+            startPlaying()
         } else {
             finishPlaying(success: true)
             state = State.readyToPlay

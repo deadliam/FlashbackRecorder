@@ -11,59 +11,47 @@ import Foundation
 class RecordingStorage {
     
     private var record: Record!
+    private let recordPrefix = "flashback-record-"
+    private let recordExtension = ".m4a"
+    private let recordsDirectoryName = "Records"
     
-    func createURLForNewRecord() -> URL? {
-        
-        let appRecordsFolderUrl = getRecordsDirectoryURL()
-    
+    func createNewRecord() -> Record {
         let now: Date = Date.init(timeIntervalSinceNow: 0)
-        let fileNameDatePrefix: String = now.toString(dateFormat: "yyyy-MM-dd_HH-mm-ss")
-        let fullFileName = "flashback-record-" + fileNameDatePrefix + ".m4a"
-        let newRecordFileName = appRecordsFolderUrl.appendingPathComponent(fullFileName)
-        
-        return newRecordFileName
+        let fileNameDate: String = now.toString(dateFormat: "yyyy-MM-dd_HH-mm-ss")
+        return Record(title: recordPrefix + fileNameDate + recordExtension, date: now)
     }
     
-//    func makeRecordingURL() -> URL {
-//        let now: Date = Date.init(timeIntervalSinceNow: 0)
-//        let caldate: String = now.toString(dateFormat: "yyyy-MM-dd_HH-mm-ss")
-//        let recorderFilePath = String(format: "%@/flashback-record-%@.m4a", self.getRecordsDirectoryURL().path, caldate)
-//        return URL(string: recorderFilePath)!
-//    }
-    
-//    func getDocumentsDirectoryURL() -> URL {
-//        let documentsDirUrls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-//        return documentsDirUrls
-//    }
-    
-    func getRecordsDirectoryURL() -> URL {
-        return FileManager.documentDirectoryURL.appendingPathComponent("Records")
-    }
-    
-    func createRecordsDir() {
-        let recDir = getRecordsDirectoryURL()
-        if !FileManager.default.fileExists(atPath: recDir.path) {
+    func createRecordsDirectoryIfNotExists() {
+        let recordsDirectory = FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName, isDirectory: true)
+        if !FileManager.default.fileExists(atPath: recordsDirectory.path) {
             do {
-                try FileManager.default.createDirectory(atPath: recDir.path, withIntermediateDirectories: true, attributes: nil)
+                try FileManager.default.createDirectory(atPath: recordsDirectory.path, withIntermediateDirectories: true, attributes: nil)
             } catch {
                 NSLog("Couldn't create Records directory")
             }
         }
     }
     
+    func parseRecordDetails(filePath: String) -> Record {
+        let manager = FileManager.default
+        let titleWithExtension = URL(fileURLWithPath: filePath).lastPathComponent
+        let creationDate = manager.createdDateForFile(atPath: filePath)
+        return Record(title: String(describing: titleWithExtension), date: creationDate)
+    }
+    
     // сохранять json с записями и на старте апки читать
-    func getRecordsArray() -> [Record] {
+    func getExistingRecordsArray() -> [Record] {
         var records = [Record]()
-        func meetsRequirement(name: String) -> Bool { return name.contains("flashback-record-") && name.hasSuffix("m4a") }
+        func meetsRequirement(name: String) -> Bool { return name.contains(recordPrefix) && name.hasSuffix(recordExtension) }
         do {
             let manager = FileManager.default
-            let recordsDirectory = getRecordsDirectoryURL()
-//            if manager.changeCurrentDirectoryPath(recordsDirectory.path) {
+            let recordsDirectory = FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName, isDirectory: true)
+            // if Records directory exists
             if manager.fileExists(atPath: recordsDirectory.path) {
-                for fileName in try manager.contentsOfDirectory(atPath: recordsDirectory.path) {
-                    if meetsRequirement(name: fileName) {
-                        let createdDate = manager.createdDateForFile(atPath: recordsDirectory.appendingPathComponent(fileName).path)
-                        records.append(Record(title: fileName, filePath: recordsDirectory.path, date: createdDate))
+                for filePathAndName in try manager.contentsOfDirectory(atPath: recordsDirectory.path) {
+                    if meetsRequirement(name: filePathAndName) {
+                        let record = parseRecordDetails(filePath: filePathAndName)
+                        records.append(record)
                     }
                 }
             }
@@ -78,7 +66,7 @@ class RecordingStorage {
     
     func removeRecord(name: String) {
         do {
-            let fileName = getRecordsDirectoryURL().appendingPathComponent(name)
+            let fileName = FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName).appendingPathComponent(name)
             try FileManager.default.removeItem(at: fileName)
         } catch let error as NSError {
             print("Error: \(error.domain)")
@@ -88,7 +76,7 @@ class RecordingStorage {
     func toggleListing() {
         do {
             let manager = FileManager.default
-            let files = try manager.contentsOfDirectory(atPath: getRecordsDirectoryURL().path)
+            let files = try manager.contentsOfDirectory(atPath: FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName).path)
             if !files.isEmpty {
                 for file in files {
                     print(file)
@@ -108,10 +96,10 @@ class RecordingStorage {
 //        let minimumDate = Date().addingTimeInterval(-maximumDays*24*60*60)
 //        func meetsRequirement(date: Date) -> Bool { return date < minimumDate }
         
-        func meetsRequirement(name: String) -> Bool { return name.contains("flashback-record-") && name.hasSuffix("m4a") }
+        func meetsRequirement(name: String) -> Bool { return name.contains(recordPrefix) && name.hasSuffix(recordExtension) }
         do {
             let manager = FileManager.default
-            for file in try manager.contentsOfDirectory(at: getRecordsDirectoryURL(), includingPropertiesForKeys: []) {
+            for file in try manager.contentsOfDirectory(at: FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName), includingPropertiesForKeys: []) {
 //                    let creationDate = try manager.attributesOfItem(atPath: file)[FileAttributeKey.creationDate] as! Date
 //                    if meetsRequirement(name: file) && meetsRequirement(date: creationDate) {
                 if meetsRequirement(name: file.path) {
@@ -132,11 +120,9 @@ class RecordingStorage {
 class Record {
     var title: String
     var date: Date
-    var filePath: String
     
-    public init(title: String, filePath: String, date: Date) {
+    public init(title: String, date: Date) {
         self.title = title
-        self.filePath = filePath
         self.date = date
     }
 }

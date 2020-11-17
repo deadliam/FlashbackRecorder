@@ -28,7 +28,6 @@ extension FileManager {
     
     static var documentDirectoryURL: URL {
         let documentDirectoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-//        let documentDirectoryURL = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
         return documentDirectoryURL.first!
     }
 }
