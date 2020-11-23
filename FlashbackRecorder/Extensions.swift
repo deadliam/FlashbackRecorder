@@ -9,21 +9,24 @@
 import Foundation
 
 extension FileManager {
-    func urls(for directory: FileManager.SearchPathDirectory, skipsHiddenFiles: Bool = true ) -> [URL]? {
-        let documentsURL = urls(for: directory, in: .userDomainMask)[0]
-        let fileURLs = try? contentsOfDirectory(at: documentsURL, includingPropertiesForKeys: nil, options: skipsHiddenFiles ? .skipsHiddenFiles : [] )
-        return fileURLs
-    }
-
-    func createdDateForFile(atPath path: String) -> Date {
-        var theCreationDate = Date()
-        do{
-            let aFileAttributes = try FileManager.default.attributesOfItem(atPath: path) as [FileAttributeKey: Any]
-            theCreationDate = aFileAttributes[FileAttributeKey.creationDate] as! Date
-        } catch let theError {
-            print("file not found \(theError)")
+    
+//    func urls(for directory: FileManager.SearchPathDirectory, skipsHiddenFiles: Bool = true ) -> [URL]? {
+//        let documentsURL = urls(for: directory, in: .userDomainMask)[0]
+//        let fileURLs = try? contentsOfDirectory(at: documentsURL, includingPropertiesForKeys: nil, options: skipsHiddenFiles ? .skipsHiddenFiles : [] )
+//        return fileURLs
+//    }
+    
+    func creationDate(for fileURL: URL) -> Date {
+        var creationDate: Date!
+        do {
+            let resources = try fileURL.resourceValues(forKeys: [.creationDateKey])
+            creationDate = resources.creationDate!
+            
         }
-        return theCreationDate
+        catch {
+            print(error)
+        }
+        return creationDate
     }
     
     static var documentDirectoryURL: URL {

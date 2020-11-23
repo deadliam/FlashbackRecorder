@@ -81,12 +81,6 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         } catch {
             finishRecording(success: false)
         }
-        
-        let records = storage.getExistingRecordsArray()
-        
-        if !records.isEmpty && records.count > maxFiles {
-            storage.removeRecord(name: records.first!.title)
-        }
     }
         
     func startPlaying() {
@@ -145,6 +139,11 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         } else {
             state = State.failed
             // recording failed :(
+        }
+        // Remove unnecessary records
+        let records = storage.getExistingRecordsArray()
+        if !records.isEmpty && records.count > maxFiles {
+            storage.removeRecord(name: records.first!.title)
         }
     }
 

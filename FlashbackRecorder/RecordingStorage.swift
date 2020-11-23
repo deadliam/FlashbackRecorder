@@ -32,10 +32,11 @@ class RecordingStorage {
         }
     }
     
-    func parseRecordDetails(filePath: String) -> Record {
+    func parseRecordDetails(fileURL: URL) -> Record {
         let manager = FileManager.default
-        let titleWithExtension = URL(fileURLWithPath: filePath).lastPathComponent
-        let creationDate = manager.createdDateForFile(atPath: filePath)
+        let titleWithExtension = fileURL.lastPathComponent
+//        let creationDate = manager.lastCreated(path: filePathAndName)
+        let creationDate = manager.creationDate(for: fileURL)
         return Record(title: String(describing: titleWithExtension), date: creationDate)
     }
     
@@ -48,9 +49,11 @@ class RecordingStorage {
             let recordsDirectory = FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName, isDirectory: true)
             // if Records directory exists
             if manager.fileExists(atPath: recordsDirectory.path) {
-                for filePathAndName in try manager.contentsOfDirectory(atPath: recordsDirectory.path) {
-                    if meetsRequirement(name: filePathAndName) {
-                        let record = parseRecordDetails(filePath: filePathAndName)
+                let files = try manager.contentsOfDirectory(atPath: recordsDirectory.path)
+                for fileName in files {
+                    if meetsRequirement(name: fileName) {
+                        
+                        let record = parseRecordDetails(fileURL: recordsDirectory.appendingPathComponent(fileName))
                         records.append(record)
                     }
                 }
