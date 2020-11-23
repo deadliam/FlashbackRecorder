@@ -110,7 +110,8 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
             } else {
                 print("FILE NOT AVAILABLE")
             }
-            
+// ==========================================================
+// Player doesn't play current url :(
             player = try AVAudioPlayer(contentsOf: url)
 //            player?.prepareToPlay()
             player?.delegate = self
