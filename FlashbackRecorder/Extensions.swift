@@ -29,10 +29,11 @@ extension FileManager {
         return creationDate
     }
     
-    static var documentDirectoryURL: URL {
-        let documentDirectoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        return documentDirectoryURL.first!
-    }
+//    static var documentDirectoryURL: URL {
+////        let documentDirectoryURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+//        let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
+//        return documentDirectoryURL
+//    }
 }
 
 extension Date {

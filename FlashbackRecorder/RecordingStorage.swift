@@ -22,7 +22,8 @@ class RecordingStorage {
     }
     
     func createRecordsDirectoryIfNotExists() {
-        let recordsDirectory = FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName, isDirectory: true)
+        let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
+        let recordsDirectory = documentDirectoryURL.appendingPathComponent(recordsDirectoryName, isDirectory: true)
         if !FileManager.default.fileExists(atPath: recordsDirectory.path) {
             do {
                 try FileManager.default.createDirectory(atPath: recordsDirectory.path, withIntermediateDirectories: true, attributes: nil)
@@ -46,13 +47,13 @@ class RecordingStorage {
         func meetsRequirement(name: String) -> Bool { return name.contains(recordPrefix) && name.hasSuffix(recordExtension) }
         do {
             let manager = FileManager.default
-            let recordsDirectory = FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName, isDirectory: true)
+            let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
+            let recordsDirectory = documentDirectoryURL.appendingPathComponent(recordsDirectoryName, isDirectory: true)
             // if Records directory exists
             if manager.fileExists(atPath: recordsDirectory.path) {
                 let files = try manager.contentsOfDirectory(atPath: recordsDirectory.path)
                 for fileName in files {
                     if meetsRequirement(name: fileName) {
-                        
                         let record = parseRecordDetails(fileURL: recordsDirectory.appendingPathComponent(fileName))
                         records.append(record)
                     }
@@ -69,7 +70,8 @@ class RecordingStorage {
     
     func removeRecord(name: String) {
         do {
-            let fileName = FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName).appendingPathComponent(name)
+            let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
+            let fileName = documentDirectoryURL.appendingPathComponent(recordsDirectoryName).appendingPathComponent(name)
             try FileManager.default.removeItem(at: fileName)
         } catch let error as NSError {
             print("Error: \(error.domain)")
@@ -79,7 +81,8 @@ class RecordingStorage {
     func toggleListing() {
         do {
             let manager = FileManager.default
-            let files = try manager.contentsOfDirectory(atPath: FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName).path)
+            let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
+            let files = try manager.contentsOfDirectory(atPath: documentDirectoryURL.appendingPathComponent(recordsDirectoryName).path)
             if !files.isEmpty {
                 for file in files {
                     print(file)
@@ -102,7 +105,8 @@ class RecordingStorage {
         func meetsRequirement(name: String) -> Bool { return name.contains(recordPrefix) && name.hasSuffix(recordExtension) }
         do {
             let manager = FileManager.default
-            for file in try manager.contentsOfDirectory(at: FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName), includingPropertiesForKeys: []) {
+            let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
+            for file in try manager.contentsOfDirectory(at: documentDirectoryURL.appendingPathComponent(recordsDirectoryName), includingPropertiesForKeys: []) {
 //                    let creationDate = try manager.attributesOfItem(atPath: file)[FileAttributeKey.creationDate] as! Date
 //                    if meetsRequirement(name: file) && meetsRequirement(date: creationDate) {
                 if meetsRequirement(name: file.path) {

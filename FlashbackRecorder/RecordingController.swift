@@ -73,8 +73,9 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         ]
 
         do {
-            let documentsDirectory = FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName)
-            audioRecorder = try AVAudioRecorder(url: documentsDirectory.appendingPathComponent(newAudioRecord.title), settings: settings)
+            let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
+            let recordsDirectory = documentDirectoryURL.appendingPathComponent(recordsDirectoryName)
+            audioRecorder = try AVAudioRecorder(url: recordsDirectory.appendingPathComponent(newAudioRecord.title), settings: settings)
             audioRecorder.delegate = self
             audioRecorder.isMeteringEnabled = true
             audioRecorder.record(forDuration: recDuration)
@@ -92,19 +93,26 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
             return
         }
         state = State.playing
+        
         do {
-            let documentsDirectory = FileManager.documentDirectoryURL.appendingPathComponent(recordsDirectoryName)
-            let url = documentsDirectory.appendingPathComponent(records.last!.title)
+            let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
+            let recordsDirectory = documentDirectoryURL.appendingPathComponent(recordsDirectoryName)
+            let url = recordsDirectory.appendingPathComponent(records.first!.title)
             
-            print("FILE: \(String(describing: url))")
+            print("Play: \(String(describing: url))")
             
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-            try AVAudioSession.sharedInstance().setActive(true)
-
-            /* The following line is required for the player to work on iOS 11. Change the file type accordingly*/
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playAndRecord, mode: .spokenAudio, options: .defaultToSpeaker)
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+            
+            if try url.checkResourceIsReachable() {
+                print("FILE AVAILABLE")
+            } else {
+                print("FILE NOT AVAILABLE")
+            }
             
             player = try AVAudioPlayer(contentsOf: url)
-            
+//            player?.prepareToPlay()
             player?.delegate = self
             /* iOS 10 and earlier require the following line:
             player = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileTypeMPEGLayer3) */
