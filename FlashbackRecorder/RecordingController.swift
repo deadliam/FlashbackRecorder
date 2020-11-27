@@ -97,7 +97,7 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         do {
             let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
             let recordsDirectory = documentDirectoryURL.appendingPathComponent(recordsDirectoryName)
-            let url = recordsDirectory.appendingPathComponent(records.first!.title)
+            let url = recordsDirectory.appendingPathComponent(records.last!.title)
             
             print("Play: \(String(describing: url))")
             
