@@ -122,6 +122,12 @@ class RecordsTableViewController: UITableViewController {
         tableView.register(RecordingCell.self, forCellReuseIdentifier: "RecordingCell")
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 80
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            image: UIImage(systemName: "timeline.selection"),
+            style: .plain,
+            target: self,
+            action: #selector(openTimeline)
+        )
         
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(refreshRecordings), for: .valueChanged)
@@ -137,7 +143,29 @@ class RecordsTableViewController: UITableViewController {
         recordings = storage.getExistingRecordsArray().sorted { $0.date > $1.date }
         tableView.reloadData()
     }
-    
+
+    @objc private func openTimeline() {
+        let timelineVC = TimelineViewController(storage: storage) { [weak self] record, autoPlay in
+            self?.focus(on: record)
+            if autoPlay {
+                self?.playRecording(record)
+            }
+        }
+        let nav = UINavigationController(rootViewController: timelineVC)
+        present(nav, animated: true)
+    }
+
+    private func focus(on record: Record) {
+        if recordings.isEmpty {
+            loadRecordings()
+        }
+
+        if let index = recordings.firstIndex(where: { $0.title == record.title }) {
+            let indexPath = IndexPath(row: index, section: 0)
+            tableView.scrollToRow(at: indexPath, at: .middle, animated: true)
+            tableView.selectRow(at: indexPath, animated: true, scrollPosition: .none)
+        }
+    }
     // MARK: - Table view data source
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return recordings.count

@@ -1,15 +1,6 @@
-//
-//  RecordingStorage.swift
-//  FlashbackRecorder
-//
-//  Created by Anatolii Kasianov on 26.03.2020.
-//  Copyright © 2020 Anatolii Kasianov. All rights reserved.
-//
-
 import Foundation
 
-class RecordingStorage {
-
+final class RecordingStorage {
     private let fileManager = FileManager.default
     private let recordPrefix = "flashback-record-"
     private let recordExtension = "m4a"
@@ -20,6 +11,11 @@ class RecordingStorage {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
         return formatter
+    }()
+
+    private lazy var indexStore: SegmentIndexStore = {
+        let dbURL = recordsDirectoryURL.appendingPathComponent("segments.sqlite")
+        return SegmentIndexStore(databaseURL: dbURL)
     }()
 
     var recordsDirectoryURL: URL {
@@ -50,32 +46,34 @@ class RecordingStorage {
         recordsDirectoryURL.appendingPathComponent(fileName)
     }
 
-    private func parseRecordDetails(fileURL: URL) -> Record {
-        let creationDate = fileManager.creationDate(for: fileURL)
-        return Record(title: fileURL.lastPathComponent, date: creationDate)
+    func indexSegmentStart(_ record: Record) {
+        indexStore.upsertSegment(fileName: record.title, startAt: record.date, endAt: record.endDate, sizeBytes: record.sizeBytes)
+    }
+
+    func indexSegmentEnd(fileName: String, endAt: Date, sizeBytes: Int64) {
+        indexStore.updateSegmentEnd(fileName: fileName, endAt: endAt, sizeBytes: sizeBytes)
     }
 
     func getExistingRecordsArray() -> [Record] {
         createRecordsDirectoryIfNotExists()
 
-        do {
-            let urls = try fileManager.contentsOfDirectory(
-                at: recordsDirectoryURL,
-                includingPropertiesForKeys: [.creationDateKey],
-                options: [.skipsHiddenFiles]
-            )
-
-            return urls
-                .filter { url in
-                    let fileName = url.lastPathComponent
-                    return fileName.hasPrefix(recordPrefix) && url.pathExtension == recordExtension
-                }
-                .map(parseRecordDetails(fileURL:))
-                .sorted { $0.date < $1.date }
-        } catch {
-            print("Cannot read records directory: \(error.localizedDescription)")
-            return []
+        let indexed = indexStore.fetchSegments()
+        if !indexed.isEmpty {
+            return indexed
         }
+
+        // Bootstrap index from existing files once.
+        let scanned = scanRecordsFromFilesystem().sorted { $0.date > $1.date }
+        scanned.forEach { indexStore.upsertSegment(fileName: $0.title, startAt: $0.date, endAt: $0.endDate, sizeBytes: $0.sizeBytes) }
+        return scanned
+    }
+
+    func getRecords(from: Date?, to: Date?, limit: Int? = nil) -> [Record] {
+        indexStore.fetchSegments(from: from, to: to, limit: limit)
+    }
+
+    func findRecord(at date: Date) -> Record? {
+        indexStore.findSegment(at: date)
     }
 
     func removeRecord(name: String) {
@@ -84,6 +82,7 @@ class RecordingStorage {
             if fileManager.fileExists(atPath: fileURL.path) {
                 try fileManager.removeItem(at: fileURL)
             }
+            indexStore.deleteSegment(fileName: name)
         } catch {
             print("Cannot remove record \(name): \(error.localizedDescription)")
         }
@@ -91,7 +90,7 @@ class RecordingStorage {
 
     func removeRecordsIfNeeded(maxCount: Int) {
         guard maxCount > 0 else { return }
-        let records = getExistingRecordsArray()
+        let records = getExistingRecordsArray().sorted { $0.date < $1.date }
         guard records.count > maxCount else { return }
 
         let excessCount = records.count - maxCount
@@ -100,6 +99,15 @@ class RecordingStorage {
 
     func deleteAllRecords() {
         getExistingRecordsArray().forEach { removeRecord(name: $0.title) }
+        indexStore.clearSegments()
+    }
+
+    func addMarker(at date: Date = Date(), note: String? = nil) {
+        _ = indexStore.addMarker(at: date, note: note)
+    }
+
+    func fetchMarkers(from: Date? = nil, to: Date? = nil, limit: Int = 200) -> [MarkerRecord] {
+        indexStore.fetchMarkers(from: from, to: to, limit: limit)
     }
 
     func toggleListing() {
@@ -116,21 +124,29 @@ class RecordingStorage {
     func toggleCleaning() {
         deleteAllRecords()
     }
-}
 
-class Record {
-    var title: String
-    var date: Date
+    private func scanRecordsFromFilesystem() -> [Record] {
+        do {
+            let urls = try fileManager.contentsOfDirectory(
+                at: recordsDirectoryURL,
+                includingPropertiesForKeys: [.creationDateKey, .fileSizeKey],
+                options: [.skipsHiddenFiles]
+            )
 
-    var url: URL {
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        return documentsDirectory
-            .appendingPathComponent("Records", isDirectory: true)
-            .appendingPathComponent(title)
-    }
+            return urls.compactMap { url -> Record? in
+                let fileName = url.lastPathComponent
+                guard fileName.hasPrefix(recordPrefix), url.pathExtension == recordExtension else {
+                    return nil
+                }
 
-    public init(title: String, date: Date) {
-        self.title = title
-        self.date = date
+                let values = try? url.resourceValues(forKeys: [.creationDateKey, .fileSizeKey])
+                let creationDate = values?.creationDate ?? Date()
+                let fileSize = values?.fileSize.map(Int64.init) ?? 0
+                return Record(title: fileName, date: creationDate, endDate: nil, sizeBytes: fileSize)
+            }
+        } catch {
+            print("Cannot read records directory: \(error.localizedDescription)")
+            return []
+        }
     }
 }

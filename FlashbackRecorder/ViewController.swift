@@ -14,6 +14,7 @@ final class ViewController: UIViewController, RecordingControllerDelegate, Setti
     private var playButton: UIButton!
     private var cleanButton: UIButton!
     private var listFilesButton: UIButton!
+    private var markerButton: UIButton!
     private var recordingController: RecordingController!
     private var recordingStorage: RecordingStorage!
     private var timerLabel: UILabel!
@@ -118,7 +119,14 @@ final class ViewController: UIViewController, RecordingControllerDelegate, Setti
             action: #selector(toggleListing)
         )
 
-        buttonStackView = UIStackView(arrangedSubviews: [recordButton, playButton, cleanButton, listFilesButton])
+        markerButton = createModernButton(
+            title: "Add Marker",
+            symbol: "bookmark.fill",
+            color: .systemIndigo,
+            action: #selector(addMarker)
+        )
+
+        buttonStackView = UIStackView(arrangedSubviews: [recordButton, playButton, markerButton, cleanButton, listFilesButton])
         buttonStackView.translatesAutoresizingMaskIntoConstraints = false
         buttonStackView.axis = .vertical
         buttonStackView.spacing = 16
@@ -354,6 +362,20 @@ final class ViewController: UIViewController, RecordingControllerDelegate, Setti
         let recordsVC = RecordsTableViewController()
         let navController = UINavigationController(rootViewController: recordsVC)
         present(navController, animated: true)
+    }
+
+    @objc private func addMarker() {
+        let alert = UIAlertController(title: "New Marker", message: "Optional note", preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.placeholder = "Marker note"
+        }
+        alert.addAction(UIAlertAction(title: "Save", style: .default) { [weak self] _ in
+            let note = alert.textFields?.first?.text
+            self?.recordingController.addMarker(note: note)
+            self?.feedbackView.show(icon: "bookmark.fill", message: "Marker saved", style: .success)
+        })
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(alert, animated: true)
     }
 }
 

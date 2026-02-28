@@ -39,14 +39,15 @@ class SettingsViewController: UITableViewController {
     
     // MARK: - Table view data source
     override func numberOfSections(in tableView: UITableView) -> Int {
-        return 3
+        return 4
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
         case 0: return 4 // Recording Duration
         case 1: return 2 // Recording Quality
-        case 2: return 3 // Max Recordings
+        case 2: return 4 // Segment Size
+        case 3: return 3 // Max Recordings
         default: return 0
         }
     }
@@ -55,7 +56,8 @@ class SettingsViewController: UITableViewController {
         switch section {
         case 0: return "Recording Duration"
         case 1: return "Recording Quality"
-        case 2: return "Maximum Recordings"
+        case 2: return "Segment Size"
+        case 3: return "Maximum Recordings"
         default: return nil
         }
     }
@@ -83,6 +85,15 @@ class SettingsViewController: UITableViewController {
             }
             
         case 2:
+            let sizes = [5, 10, 20, 50]
+            cell.textLabel?.text = "\(sizes[indexPath.row]) MB"
+            if settings.segmentSizeMB == sizes[indexPath.row] {
+                cell.accessoryType = .checkmark
+            } else {
+                cell.accessoryType = .none
+            }
+            
+        case 3:
             let maxFiles = [20, 50, 100]
             cell.textLabel?.text = "\(maxFiles[indexPath.row]) recordings"
             if settings.maxRecordings == maxFiles[indexPath.row] {
@@ -111,6 +122,10 @@ class SettingsViewController: UITableViewController {
             settings.quality = qualities[indexPath.row]
             
         case 2:
+            let sizes = [5, 10, 20, 50]
+            settings.segmentSizeMB = sizes[indexPath.row]
+
+        case 3:
             let maxFiles = [20, 50, 100]
             settings.maxRecordings = maxFiles[indexPath.row]
             

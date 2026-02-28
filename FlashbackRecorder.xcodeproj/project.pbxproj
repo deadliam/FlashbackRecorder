@@ -20,6 +20,10 @@
 		65BC1687242D3B3F00F98C2F /* RecordingStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1686242D3B3F00F98C2F /* RecordingStorage.swift */; };
 		65BC1689242D495D00F98C2F /* RecordsTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1688242D495D00F98C2F /* RecordsTableView.swift */; };
 		65BC1691242D5A5D00F98C2F /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1690242D5A5D00F98C2F /* SettingsViewController.swift */; };
+		65BC1693242D5A6D00F98C2F /* RecordingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1692242D5A6D00F98C2F /* RecordingModels.swift */; };
+		65BC1695242D5A7D00F98C2F /* SegmentIndexStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1694242D5A7D00F98C2F /* SegmentIndexStore.swift */; };
+		65BC1697242D5A8D00F98C2F /* SegmentRecorderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1696242D5A8D00F98C2F /* SegmentRecorderService.swift */; };
+		65BC1699242D5A9D00F98C2F /* TimelineViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1698242D5A9D00F98C2F /* TimelineViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +42,10 @@
 		65BC1686242D3B3F00F98C2F /* RecordingStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingStorage.swift; sourceTree = "<group>"; };
 		65BC1688242D495D00F98C2F /* RecordsTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsTableView.swift; sourceTree = "<group>"; };
 		65BC1690242D5A5D00F98C2F /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
+		65BC1692242D5A6D00F98C2F /* RecordingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingModels.swift; sourceTree = "<group>"; };
+		65BC1694242D5A7D00F98C2F /* SegmentIndexStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentIndexStore.swift; sourceTree = "<group>"; };
+		65BC1696242D5A8D00F98C2F /* SegmentRecorderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentRecorderService.swift; sourceTree = "<group>"; };
+		65BC1698242D5A9D00F98C2F /* TimelineViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +92,10 @@
 				65BC1686242D3B3F00F98C2F /* RecordingStorage.swift */,
 				65BC1688242D495D00F98C2F /* RecordsTableView.swift */,
 				65BC1690242D5A5D00F98C2F /* SettingsViewController.swift */,
+				65BC1692242D5A6D00F98C2F /* RecordingModels.swift */,
+				65BC1694242D5A7D00F98C2F /* SegmentIndexStore.swift */,
+				65BC1696242D5A8D00F98C2F /* SegmentRecorderService.swift */,
+				65BC1698242D5A9D00F98C2F /* TimelineViewController.swift */,
 			);
 			path = FlashbackRecorder;
 			sourceTree = "<group>";
@@ -166,6 +178,10 @@
 				65BC1687242D3B3F00F98C2F /* RecordingStorage.swift in Sources */,
 				65BC1685242D3AD200F98C2F /* RecordingController.swift in Sources */,
 				65BC1691242D5A5D00F98C2F /* SettingsViewController.swift in Sources */,
+				65BC1693242D5A6D00F98C2F /* RecordingModels.swift in Sources */,
+				65BC1695242D5A7D00F98C2F /* SegmentIndexStore.swift in Sources */,
+				65BC1697242D5A8D00F98C2F /* SegmentRecorderService.swift in Sources */,
+				65BC1699242D5A9D00F98C2F /* TimelineViewController.swift in Sources */,
 				65211AB5242A6B3000105B10 /* BaseScrollViewController.swift in Sources */,
 				65601BB324290DE500E70FF9 /* SceneDelegate.swift in Sources */,
 				65BC1681242D30BE00F98C2F /* ButtonBuilder.swift in Sources */,
@@ -316,11 +332,15 @@
 				DEVELOPMENT_TEAM = 935HT34PV8;
 				INFOPLIST_FILE = FlashbackRecorder/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pihsrawnaissurkcuf.FlashbackRecorder;
+					LD_RUNPATH_SEARCH_PATHS = (
+						"$(inherited)",
+						"@executable_path/Frameworks",
+					);
+					OTHER_LDFLAGS = (
+						"$(inherited)",
+						"-lsqlite3",
+					);
+					PRODUCT_BUNDLE_IDENTIFIER = com.pihsrawnaissurkcuf.FlashbackRecorder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -335,11 +355,15 @@
 				DEVELOPMENT_TEAM = 935HT34PV8;
 				INFOPLIST_FILE = FlashbackRecorder/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.pihsrawnaissurkcuf.FlashbackRecorder;
+					LD_RUNPATH_SEARCH_PATHS = (
+						"$(inherited)",
+						"@executable_path/Frameworks",
+					);
+					OTHER_LDFLAGS = (
+						"$(inherited)",
+						"-lsqlite3",
+					);
+					PRODUCT_BUNDLE_IDENTIFIER = com.pihsrawnaissurkcuf.FlashbackRecorder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
