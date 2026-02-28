@@ -9,125 +9,126 @@
 import Foundation
 
 class RecordingStorage {
-    
-    private var record: Record!
+
+    private let fileManager = FileManager.default
     private let recordPrefix = "flashback-record-"
-    private let recordExtension = ".m4a"
+    private let recordExtension = "m4a"
     private let recordsDirectoryName = "Records"
-    
-    func createNewRecord() -> Record {
-        let now: Date = Date.init(timeIntervalSinceNow: 0)
-        let fileNameDate: String = now.toString(dateFormat: "yyyy-MM-dd_HH-mm-ss")
-        return Record(title: recordPrefix + fileNameDate + recordExtension, date: now)
+
+    private lazy var dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
+        return formatter
+    }()
+
+    var recordsDirectoryURL: URL {
+        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        return documentsDirectory.appendingPathComponent(recordsDirectoryName, isDirectory: true)
     }
-    
+
     func createRecordsDirectoryIfNotExists() {
-        let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
-        let recordsDirectory = documentDirectoryURL.appendingPathComponent(recordsDirectoryName, isDirectory: true)
-        if !FileManager.default.fileExists(atPath: recordsDirectory.path) {
-            do {
-                try FileManager.default.createDirectory(atPath: recordsDirectory.path, withIntermediateDirectories: true, attributes: nil)
-            } catch {
-                NSLog("Couldn't create Records directory")
-            }
-        }
-    }
-    
-    func parseRecordDetails(fileURL: URL) -> Record {
-        let manager = FileManager.default
-        let titleWithExtension = fileURL.lastPathComponent
-//        let creationDate = manager.lastCreated(path: filePathAndName)
-        let creationDate = manager.creationDate(for: fileURL)
-        return Record(title: String(describing: titleWithExtension), date: creationDate)
-    }
-    
-    // сохранять json с записями и на старте апки читать
-    func getExistingRecordsArray() -> [Record] {
-        var records = [Record]()
-        func meetsRequirement(name: String) -> Bool { return name.contains(recordPrefix) && name.hasSuffix(recordExtension) }
+        guard !fileManager.fileExists(atPath: recordsDirectoryURL.path) else { return }
         do {
-            let manager = FileManager.default
-            let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
-            let recordsDirectory = documentDirectoryURL.appendingPathComponent(recordsDirectoryName, isDirectory: true)
-            // if Records directory exists
-            if manager.fileExists(atPath: recordsDirectory.path) {
-                let files = try manager.contentsOfDirectory(atPath: recordsDirectory.path)
-                for fileName in files {
-                    if meetsRequirement(name: fileName) {
-                        let record = parseRecordDetails(fileURL: recordsDirectory.appendingPathComponent(fileName))
-                        records.append(record)
-                    }
-                }
-            }
+            try fileManager.createDirectory(
+                at: recordsDirectoryURL,
+                withIntermediateDirectories: true,
+                attributes: nil
+            )
+        } catch {
+            NSLog("Couldn't create Records directory: \(error.localizedDescription)")
         }
-        catch {
-            print("Cannot read Documents dir")
-        }
-//        print("RECORDS: \(records.count)")
-//        print("FIRST: \(String(describing: records.first?.title)) ==== LAST: \(String(describing: records.last?.title))")
-        return records
     }
-    
+
+    func createNewRecord(at date: Date = Date()) -> Record {
+        let timestamp = dateFormatter.string(from: date)
+        let fileName = "\(recordPrefix)\(timestamp).\(recordExtension)"
+        return Record(title: fileName, date: date)
+    }
+
+    func recordURL(for fileName: String) -> URL {
+        recordsDirectoryURL.appendingPathComponent(fileName)
+    }
+
+    private func parseRecordDetails(fileURL: URL) -> Record {
+        let creationDate = fileManager.creationDate(for: fileURL)
+        return Record(title: fileURL.lastPathComponent, date: creationDate)
+    }
+
+    func getExistingRecordsArray() -> [Record] {
+        createRecordsDirectoryIfNotExists()
+
+        do {
+            let urls = try fileManager.contentsOfDirectory(
+                at: recordsDirectoryURL,
+                includingPropertiesForKeys: [.creationDateKey],
+                options: [.skipsHiddenFiles]
+            )
+
+            return urls
+                .filter { url in
+                    let fileName = url.lastPathComponent
+                    return fileName.hasPrefix(recordPrefix) && url.pathExtension == recordExtension
+                }
+                .map(parseRecordDetails(fileURL:))
+                .sorted { $0.date < $1.date }
+        } catch {
+            print("Cannot read records directory: \(error.localizedDescription)")
+            return []
+        }
+    }
+
     func removeRecord(name: String) {
         do {
-            let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
-            let fileName = documentDirectoryURL.appendingPathComponent(recordsDirectoryName).appendingPathComponent(name)
-            try FileManager.default.removeItem(at: fileName)
-        } catch let error as NSError {
-            print("Error: \(error.domain)")
+            let fileURL = recordURL(for: name)
+            if fileManager.fileExists(atPath: fileURL.path) {
+                try fileManager.removeItem(at: fileURL)
+            }
+        } catch {
+            print("Cannot remove record \(name): \(error.localizedDescription)")
         }
     }
-    
+
+    func removeRecordsIfNeeded(maxCount: Int) {
+        guard maxCount > 0 else { return }
+        let records = getExistingRecordsArray()
+        guard records.count > maxCount else { return }
+
+        let excessCount = records.count - maxCount
+        records.prefix(excessCount).forEach { removeRecord(name: $0.title) }
+    }
+
+    func deleteAllRecords() {
+        getExistingRecordsArray().forEach { removeRecord(name: $0.title) }
+    }
+
     func toggleListing() {
-        do {
-            let manager = FileManager.default
-            let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
-            let files = try manager.contentsOfDirectory(atPath: documentDirectoryURL.appendingPathComponent(recordsDirectoryName).path)
-            if !files.isEmpty {
-                for file in files {
-                    print(file)
-                }
-            } else {
-                print("There is nothing to list :(")
-            }
+        let records = getExistingRecordsArray()
+        if records.isEmpty {
+            print("There is nothing to list :(")
+            return
         }
-        catch {
-            print("Cannot list files. \(error)")
-        }
+
+        records.forEach { print($0.title) }
     }
-    
-    
+
+    // Backward-compatible wrapper used by existing UI.
     func toggleCleaning() {
-//        let maximumDays = 1.0
-//        let minimumDate = Date().addingTimeInterval(-maximumDays*24*60*60)
-//        func meetsRequirement(date: Date) -> Bool { return date < minimumDate }
-        
-        func meetsRequirement(name: String) -> Bool { return name.contains(recordPrefix) && name.hasSuffix(recordExtension) }
-        do {
-            let manager = FileManager.default
-            let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
-            for file in try manager.contentsOfDirectory(at: documentDirectoryURL.appendingPathComponent(recordsDirectoryName), includingPropertiesForKeys: []) {
-//                    let creationDate = try manager.attributesOfItem(atPath: file)[FileAttributeKey.creationDate] as! Date
-//                    if meetsRequirement(name: file) && meetsRequirement(date: creationDate) {
-                if meetsRequirement(name: file.path) {
-                    try manager.removeItem(at: file)
-                    print("Removed: \(file.path)")
-                }
-            }
-        }
-        catch {
-            print("Cannot cleanup the old files: \(error)")
-        }
-//        cleanupButton.backgroundColor = UIColor.blue
-//        cleanupButton.setTitle("Cleaned", for: .normal)
+        deleteAllRecords()
     }
-    
 }
 
 class Record {
     var title: String
     var date: Date
-    
+
+    var url: URL {
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        return documentsDirectory
+            .appendingPathComponent("Records", isDirectory: true)
+            .appendingPathComponent(title)
+    }
+
     public init(title: String, date: Date) {
         self.title = title
         self.date = date

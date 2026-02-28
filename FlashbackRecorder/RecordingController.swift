@@ -11,25 +11,63 @@ import AVFoundation
 
 protocol RecordingControllerDelegate: AnyObject {
     func recordingController(_ controller: RecordingController, didChangeStateTo state: RecordingController.State)
+    func recordingController(_ controller: RecordingController, didUpdateMeteringLevel level: Float)
 }
 
 class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDelegate {
     
     weak var delegate: RecordingControllerDelegate?
-    private var recordingSession: AVAudioSession!
-    private var audioRecorder: AVAudioRecorder!
-    private var player: AVAudioPlayer? = AVAudioPlayer()
+    private var recordingSession: AVAudioSession = AVAudioSession.sharedInstance()
+    private var audioRecorder: AVAudioRecorder?
+    private var player: AVAudioPlayer?
     private var storage = RecordingStorage()
     
-    private let recordsDirectoryName = "Records"
+    private var recDuration: TimeInterval = 300 // 5 minutes default
+    private var maxFiles = 50 // Store more recordings
+    private var recordingQuality: AVAudioQuality = .high
     
-    private let recDuration: TimeInterval = 10 // seconds
-    private let maxFiles = 5
+    struct RecordingSettings {
+        var duration: TimeInterval
+        var quality: AVAudioQuality
+        var maxRecordings: Int
+    }
+    
+    var settings: RecordingSettings {
+        get {
+            return RecordingSettings(
+                duration: recDuration,
+                quality: recordingQuality,
+                maxRecordings: maxFiles
+            )
+        }
+        set {
+            recDuration = newValue.duration
+            recordingQuality = newValue.quality
+            maxFiles = newValue.maxRecordings
+        }
+    }
+    
+    private var meteringTimer: Timer?
     
     override init() {
         super.init()
         state = State.initial
-        self.player?.delegate = self
+    }
+    
+    private func startMetering() {
+        meteringTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            guard let self = self, let audioRecorder = self.audioRecorder else { return }
+            audioRecorder.updateMeters()
+            let level = audioRecorder.averagePower(forChannel: 0)
+            // Convert to a 0-1 scale
+            let normalizedLevel = pow(10, level/20)
+            self.delegate?.recordingController(self, didUpdateMeteringLevel: normalizedLevel)
+        }
+    }
+    
+    private func stopMetering() {
+        meteringTimer?.invalidate()
+        meteringTimer = nil
     }
     
     func errorPermisions() {
@@ -37,55 +75,54 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
     }
     
     func setupRecordingSession() {
-        recordingSession = AVAudioSession.sharedInstance()
         do {
             try recordingSession.setCategory(.playAndRecord, mode: .default)
             try recordingSession.setActive(true)
-            recordingSession.requestRecordPermission() { [unowned self] allowed in
+            recordingSession.requestRecordPermission { [weak self] allowed in
                 DispatchQueue.main.async {
                     if allowed {
                         print("Allowed to record")
-//                        self.setupRecordButton()
                     } else {
-//                        self.setupFailUI(text: "Recording failed: please ensure the app has access to your microphone.")
-                        self.errorPermisions()
+                        self?.errorPermisions()
                     }
                 }
             }
         } catch {
-//            self.setupFailUI(text: "Recording failed: please ensure the app has access to your microphone.")
             self.errorPermisions()
         }
     }
     
     func startRecording() throws {
-        
         storage.createRecordsDirectoryIfNotExists()
         print("Recording started")
         
-        let newAudioRecord = storage.createNewRecord()
+        let newAudioRecord = storage.createNewRecord(at: Date())
         
-        let settings = [
+        let recorderSettings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 12000,
-            AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+            AVSampleRateKey: recordingQuality == .high ? 44100 : 22050,
+            AVNumberOfChannelsKey: 2,
+            AVEncoderAudioQualityKey: recordingQuality.rawValue,
+            AVEncoderBitRateKey: recordingQuality == .high ? 128000 : 64000
         ]
 
         do {
-            let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
-            let recordsDirectory = documentDirectoryURL.appendingPathComponent(recordsDirectoryName)
-            audioRecorder = try AVAudioRecorder(url: recordsDirectory.appendingPathComponent(newAudioRecord.title), settings: settings)
+            let recordURL = storage.recordURL(for: newAudioRecord.title)
+            audioRecorder = try AVAudioRecorder(url: recordURL, settings: recorderSettings)
+            guard let audioRecorder = audioRecorder else {
+                finishRecording(success: false)
+                return
+            }
             audioRecorder.delegate = self
             audioRecorder.isMeteringEnabled = true
             audioRecorder.record(forDuration: recDuration)
+            startMetering()
         } catch {
             finishRecording(success: false)
         }
     }
         
     func startPlaying() {
-        let storage = RecordingStorage()
         let records = storage.getExistingRecordsArray()
         if records.isEmpty {
             state = State.readyToPlay
@@ -95,15 +132,16 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
         state = State.playing
         
         do {
-            let documentDirectoryURL = URL(fileURLWithPath: NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
-            let recordsDirectory = documentDirectoryURL.appendingPathComponent(recordsDirectoryName)
-            let url = recordsDirectory.appendingPathComponent(records.last!.title)
+            guard let latestRecord = records.last else {
+                state = .readyToPlay
+                return
+            }
+            let url = latestRecord.url
             
             print("Play: \(String(describing: url))")
             
-            let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playAndRecord, mode: .spokenAudio, options: .defaultToSpeaker)
-            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+            try recordingSession.setCategory(.playAndRecord, mode: .spokenAudio, options: .defaultToSpeaker)
+            try recordingSession.setActive(true, options: .notifyOthersOnDeactivation)
             
             if try url.checkResourceIsReachable() {
                 print("FILE AVAILABLE")
@@ -113,14 +151,15 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
 // ==========================================================
 // Player doesn't play current url :(
             player = try AVAudioPlayer(contentsOf: url)
-//            player?.prepareToPlay()
             player?.delegate = self
             /* iOS 10 and earlier require the following line:
             player = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileTypeMPEGLayer3) */
 
-            guard let player = player else { return }
+            guard let player = player else {
+                state = .failed
+                return
+            }
             player.prepareToPlay()
-//            player.volume = 1.0
             player.play()
             
         } catch let error {
@@ -140,7 +179,8 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
     }
     
     func finishRecording(success: Bool) {
-        audioRecorder.stop()
+        stopMetering()
+        audioRecorder?.stop()
         audioRecorder = nil
         print("Recording finished")
         if success {
@@ -149,11 +189,8 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
             state = State.failed
             // recording failed :(
         }
-        // Remove unnecessary records
-        let records = storage.getExistingRecordsArray()
-        if !records.isEmpty && records.count > maxFiles {
-            storage.removeRecord(name: records.first!.title)
-        }
+
+        storage.removeRecordsIfNeeded(maxCount: maxFiles)
     }
 
     func finishPlaying(success: Bool) {
@@ -169,6 +206,11 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
     }
     
     func toggleRecording() {
+        if state == .recording {
+            finishRecording(success: true)
+            return
+        }
+
         if audioRecorder == nil {
             do {
                 try startRecording()
@@ -178,16 +220,19 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
             }
         } else {
             finishRecording(success: true)
-            state = State.readyToRecord
         }
     }
     
     func togglePlaying() {
+        if state == .playing {
+            finishPlaying(success: true)
+            return
+        }
+
         if player == nil {
             startPlaying()
         } else {
             finishPlaying(success: true)
-            state = State.readyToPlay
         }
     }
     
@@ -202,7 +247,6 @@ class RecordingController: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDeleg
     
     var state = State.initial {
         didSet {
-//            onStateChange?(state)
             delegate?.recordingController(self, didChangeStateTo: state)
         }
     }

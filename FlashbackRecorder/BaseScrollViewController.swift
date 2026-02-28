@@ -33,7 +33,7 @@ import UIKit
 class BaseScrollViewController: UIViewController {
 
     // все свойства что непубичные надо делать private
-    lazy var contentViewSize = CGSize(width: self.view.frame.width, height: self.view.frame.height + 100)
+    lazy var contentViewSize = CGSize(width: self.view.frame.width, height: self.view.frame.height)
     
     lazy var scrollView: UIScrollView = {
         let view = UIScrollView(frame: .zero)
@@ -46,7 +46,7 @@ class BaseScrollViewController: UIViewController {
     
     lazy var containerView: UIView = {
         let v = UIView()
-//        v.backgroundColor = .gray
+        v.backgroundColor = .gray
         v.frame.size = contentViewSize
         return v
     }()

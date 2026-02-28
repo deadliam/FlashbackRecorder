@@ -19,6 +19,7 @@
 		65BC1685242D3AD200F98C2F /* RecordingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1684242D3AD200F98C2F /* RecordingController.swift */; };
 		65BC1687242D3B3F00F98C2F /* RecordingStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1686242D3B3F00F98C2F /* RecordingStorage.swift */; };
 		65BC1689242D495D00F98C2F /* RecordsTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1688242D495D00F98C2F /* RecordsTableView.swift */; };
+		65BC1691242D5A5D00F98C2F /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BC1690242D5A5D00F98C2F /* SettingsViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +37,7 @@
 		65BC1684242D3AD200F98C2F /* RecordingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingController.swift; sourceTree = "<group>"; };
 		65BC1686242D3B3F00F98C2F /* RecordingStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingStorage.swift; sourceTree = "<group>"; };
 		65BC1688242D495D00F98C2F /* RecordsTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsTableView.swift; sourceTree = "<group>"; };
+		65BC1690242D5A5D00F98C2F /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -81,6 +83,7 @@
 				65BC1684242D3AD200F98C2F /* RecordingController.swift */,
 				65BC1686242D3B3F00F98C2F /* RecordingStorage.swift */,
 				65BC1688242D495D00F98C2F /* RecordsTableView.swift */,
+				65BC1690242D5A5D00F98C2F /* SettingsViewController.swift */,
 			);
 			path = FlashbackRecorder;
 			sourceTree = "<group>";
@@ -162,6 +165,7 @@
 				65601BB124290DE500E70FF9 /* AppDelegate.swift in Sources */,
 				65BC1687242D3B3F00F98C2F /* RecordingStorage.swift in Sources */,
 				65BC1685242D3AD200F98C2F /* RecordingController.swift in Sources */,
+				65BC1691242D5A5D00F98C2F /* SettingsViewController.swift in Sources */,
 				65211AB5242A6B3000105B10 /* BaseScrollViewController.swift in Sources */,
 				65601BB324290DE500E70FF9 /* SceneDelegate.swift in Sources */,
 				65BC1681242D30BE00F98C2F /* ButtonBuilder.swift in Sources */,
@@ -309,13 +313,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = J7CHKBB62N;
+				DEVELOPMENT_TEAM = 935HT34PV8;
 				INFOPLIST_FILE = FlashbackRecorder/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.selfmade.FlashbackRecorder;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pihsrawnaissurkcuf.FlashbackRecorder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -327,13 +332,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = J7CHKBB62N;
+				DEVELOPMENT_TEAM = 935HT34PV8;
 				INFOPLIST_FILE = FlashbackRecorder/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.selfmade.FlashbackRecorder;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pihsrawnaissurkcuf.FlashbackRecorder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 extension FileManager {
     
@@ -41,5 +42,14 @@ extension Date {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = format
         return dateFormatter.string(from: self)
+    }
+}
+
+extension UIFont {
+    static func monospacedDigitalFont(ofSize size: CGFloat) -> UIFont {
+        if let font = UIFont(name: "Menlo", size: size) {
+            return font
+        }
+        return .monospacedSystemFont(ofSize: size, weight: .medium)
     }
 }
